@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EstudiandoAndo | Sistema V6 | Preparación EXANI-II</title>
+  <meta name="description" content="Plataforma de entrenamiento para el examen EXANI-II. Practica con reactivos reales de Comprensión Lectora y Redacción Indirecta.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Source Serif 4', 'Georgia', 'serif'],
+            mono: ['SF Mono', 'Monaco', 'Inconsolata', 'monospace']
+          },
+          colors: {
+            background: '#faf9f7',
+            foreground: '#1a1915',
+            card: '#fcfbf9',
+            'card-foreground': '#1a1915',
+            muted: '#f0efec',
+            'muted-foreground': '#6b6860',
+            border: '#e5e4e0',
+            'chart-2': '#2d8a6e',
+            destructive: '#c94a3a'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #faf9f7;
+      color: #1a1915;
+      margin: 0;
+      padding: 0;
+    }
+    .font-serif { font-family: 'Source Serif 4', Georgia, serif; }
+    .font-mono { font-family: 'SF Mono', Monaco, Inconsolata, monospace; }
+    [class*="tracking-widest"] { letter-spacing: 0.1em; }
+    [class*="tracking-wide"] { letter-spacing: 0.025em; }
+    [class*="tracking-tight"] { letter-spacing: -0.025em; }
+    .text-balance { text-wrap: balance; }
+    .text-pretty { text-wrap: pretty; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    .reading-content p { margin-bottom: 1rem; }
+    .reading-content strong { color: #1a1915; }
+    .reading-content em { color: #1a1915; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // Database
+    const db = {
+      exams: [
+        { id: 'exam_basic', title: 'Análisis Fundamental', desc: 'Evaluación de vocabulario contextual y comprensión literal compleja.', time: '45 MIN', questions: 20, idx: '01', category: 'lectura' },
+        { id: 'exam_inter', title: 'Inferencia Crítica', desc: 'Deducción de intenciones, tono e ideas implícitas.', time: '40 MIN', questions: 20, idx: '02', category: 'lectura' },
+        { id: 'exam_adv', title: 'Simulacro Maestro', desc: 'Nivel EXANI-II Superior. Textos densos y reactivos de síntesis.', time: '35 MIN', questions: 20, idx: '03', category: 'lectura' },
+        { id: 'exam_redaccion_1', title: 'Gramática y Estructura', desc: 'Sustantivos, adjetivos, verbos, oraciones compuestas y concordancia.', time: '30 MIN', questions: 20, idx: '01', category: 'redaccion' },
+        { id: 'exam_redaccion_2', title: 'Ortografía y Puntuación', desc: 'Acentuación, uso de grafías, signos de puntuación y escritura correcta.', time: '30 MIN', questions: 20, idx: '02', category: 'redaccion' },
+        { id: 'exam_redaccion_3', title: 'Simulacro Redacción', desc: 'Nivel EXANI-II. Coherencia textual, conectores y corrección integral.', time: '25 MIN', questions: 20, idx: '03', category: 'redaccion' }
+      ],
+      readings: {
+        'r_neurop': { title: 'Neuroplasticidad', type: 'CIENCIA', content: `<p>Durante décadas, el dogma central de la neurología sostenía que el cerebro adulto era una estructura estática, incapaz de generar nuevas neuronas o modificar sus conexiones de manera significativa. Sin embargo, investigaciones recientes han derribado este mito, introduciendo el concepto de neuroplasticidad.</p><p>La neuroplasticidad se define como la capacidad del sistema nervioso para cambiar su estructura y su funcionamiento a lo largo de la vida, como reacción a la diversidad del entorno. Este proceso permite a las neuronas regenerarse tanto anatómica como funcionalmente y formar nuevas conexiones sinápticas.</p><p>Este descubrimiento tiene implicaciones profundas para la educación y la rehabilitación. Significa que el aprendizaje no es meramente la acumulación de datos, sino un proceso biológico que remodela físicamente el órgano del pensamiento.</p>` },
+        'r_darkmatter': { title: 'Materia Oscura', type: 'ASTRONOMÍA', content: `<p>Al observar la rotación de las galaxias, los astrónomos se toparon con un problema aritmético fundamental: no había suficiente materia visible para mantener las estrellas en sus órbitas. Según las leyes de Newton, las estrellas en los bordes de las galaxias deberían salir despedidas al espacio.</p><p>Para explicar esta discrepancia, se postuló la existencia de la "materia oscura", una sustancia hipotética que no emite ni refleja luz, pero que ejerce atracción gravitatoria. Se estima que constituye aproximadamente el 85% de la materia del universo.</p><p>Su detección es, por tanto, indirecta. Sabemos que está ahí por sus efectos gravitacionales sobre la materia visible, la radiación y la estructura a gran escala del universo.</p>` },
+        'r_rulfo': { title: 'Ecos del Llano', type: 'LITERATURA', content: `<p>Vine a este pueblo porque me dijeron que acá vivía mi padre, un tal Pedro Páramo. Mi madre me lo dijo. Y yo le prometí que vendría a verlo en cuanto ella muriera. Le apreté sus manos en señal de que lo haría; pues ella estaba por morirse y yo en un plan de prometerlo todo.</p><p>Entonces no pude hacer otra cosa que decirle que así lo haría, y de tanto decírselo se lo seguí diciendo aun después de que a mis manos les costó trabajo zafarse de sus manos muertas.</p><p>El calor aquí es sofocante. El aire pesa, como si estuviera hecho de plomo derretido. No se oyen pájaros, solo el zumbido constante de las moscas que parecen ser las únicas dueñas de estas ruinas.</p>` },
+        'r_poema': { title: 'Hombres Necios', type: 'ANÁLISIS', content: `<p>Hombres necios que acusáis<br>a la mujer sin razón,<br>sin ver que sois la ocasión<br>de lo mismo que culpáis:</p><p>si con ansia sin igual<br>solicitáis su desdén,<br>¿por qué queréis que obren bien<br>si las incitáis al mal?</p><p>En estas redondillas, Sor Juana Inés de la Cruz expone la hipocresía de la sociedad patriarcal del siglo XVII. Utiliza el retruécano y la antítesis para desnudar la contradicción masculina.</p>` },
+        'r_redes': { title: 'Dictadura del Like', type: 'ARGUMENTATIVO', content: `<p>Vivimos en la era de la validación externa cuantificable. Las redes sociales han gamificado la interacción humana, convirtiendo la aprobación social en una métrica visible: el "like".</p><p>El problema no es la tecnología en sí, sino el diseño conductual detrás de ella. Las plataformas están diseñadas para generar descargas de dopamina intermitentes, similares a las de las máquinas tragamonedas.</p><p>Además, esta dinámica fomenta la homogeneización del pensamiento. Se sacrifica la autenticidad en el altar de la popularidad algorítmica.</p>` },
+        'r_lectura': { title: 'Resistencia Lectora', type: 'ARGUMENTATIVO', content: `<p>La lectura profunda es un acto de resistencia. En un mundo dominado por la inmediatez y la fragmentación de la atención, sentarse a leer un texto largo y complejo se ha convertido en una actividad contracultural.</p><p>Maryanne Wolf, neurocientífica cognitiva, advierte que si no ejercitamos los circuitos neuronales de la lectura profunda, estos se atrofian.</p><p>Defender la lectura no es nostalgia por el papel; es defender nuestra capacidad de pensamiento crítico.</p>` },
+        'r_gramatica': { title: 'Reglas Gramaticales', type: 'GRAMÁTICA', content: `<p><strong>Sustantivos:</strong> Los sustantivos propios nombran entidades únicas y se escriben con mayúscula inicial: <em>México, Kilauea, Juan</em>.</p><p><strong>Adjetivos:</strong> Son la categoría gramatical que señala cualidades de los sustantivos.</p><p><strong>Verbos:</strong> Los verbos impersonales no tienen sujeto gramatical: <em>llueve, nieva, hay</em>.</p>` },
+        'r_oraciones': { title: 'Tipos de Oraciones', type: 'SINTAXIS', content: `<p><strong>Oraciones compuestas:</strong> Se clasifican en coordinadas, yuxtapuestas y subordinadas.</p><p><strong>Coordinadas:</strong> Unidas por nexos coordinantes (y, e, ni, o, u, pero, sino, mas).</p><p><strong>Subordinadas:</strong> Una oración depende sintácticamente de otra principal.</p>` },
+        'r_ortografia': { title: 'Reglas Ortográficas', type: 'ORTOGRAFÍA', content: `<p><strong>Uso de RR:</strong> Se usa "rr" cuando va en medio de vocales y su sonido es fuerte: <em>perro, carro, arriba</em>.</p><p><strong>Grafías S, Z, C:</strong> Se escribe con S: <em>esbozar, esmero</em>. Se escribe con Z antes de A, O, U.</p>` },
+        'r_puntuacion': { title: 'Signos de Puntuación', type: 'PUNTUACIÓN', content: `<p><strong>Paréntesis:</strong> Encierran información aclaratoria.</p><p><strong>Puntos suspensivos:</strong> Indican suspensión del discurso. No se combinan con "etcétera".</p><p><strong>Coma:</strong> No se usa coma entre sujeto y predicado.</p>` },
+        'r_conectores': { title: 'Conectores y Coherencia', type: 'REDACCIÓN', content: `<p><strong>Conectores causales:</strong> Expresan causa o razón: <em>puesto que, ya que, porque, pues</em>.</p><p><strong>Conectores consecutivos:</strong> Expresan consecuencia: <em>por lo tanto, en consecuencia, así que</em>.</p>` },
+        'r_concordancia': { title: 'Concordancia y Relación', type: 'CONCORDANCIA', content: `<p><strong>Concordancia nominal:</strong> Los adjetivos deben concordar en género y número con los sustantivos que modifican.</p><p><strong>Sustantivos colectivos:</strong> Palabras como <em>mayoría, multitud, gente</em> son singulares gramaticalmente.</p>` }
+      },
+      questions: [
+        { id: 'q1', readingId: 'r_neurop', text: '¿Cuál es la implicación fundamental del cambio de paradigma descrito en el texto?', opts: ['La neurología carecía de bases científicas antes del descubrimiento.', 'El cerebro humano posee un potencial adaptativo que trasciende su biología inicial.', 'El dogma estático era una mentira deliberada.', 'La regeneración neuronal ocurre independientemente del entorno.'], ans: 1, expl: 'La neuroplasticidad implica que el cerebro no es fijo, sino que su potencial se expande y adapta.' },
+        { id: 'q2', readingId: 'r_neurop', text: 'En el contexto del aprendizaje, ¿cómo se reinterpreta el acto de "adquirir conocimiento"?', opts: ['Como una simple memorización de datos externos.', 'Como una reconfiguración física y funcional de la arquitectura cerebral.', 'Como un proceso puramente psicológico sin base orgánica.', 'Como una acumulación estática de información.'], ans: 1, expl: 'El aprendizaje es un proceso biológico que remodela físicamente el cerebro.' },
+        { id: 'q3', readingId: 'r_neurop', text: '¿Qué significa que las neuronas "modulan la percepción de los estímulos"?', opts: ['Que bloquean toda información externa.', 'Que filtran y ajustan cómo procesamos la información del entorno.', 'Que solo percibimos lo que queremos.', 'Que la percepción es independiente del cerebro.'], ans: 1, expl: 'Las neuronas ajustan activamente cómo procesamos tanto los estímulos entrantes como salientes.' },
+        { id: 'q4', readingId: 'r_neurop', text: '¿Cuál es la relación entre neuroplasticidad y rehabilitación según el texto?', opts: ['No existe relación directa.', 'La rehabilitación es imposible sin medicamentos.', 'Otras áreas del cerebro pueden asumir funciones perdidas.', 'Solo funciona en niños pequeños.'], ans: 2, expl: 'El texto indica que habilidades perdidas pueden recuperarse entrenando otras áreas cerebrales.' },
+        { id: 'q5', readingId: 'r_darkmatter', text: '¿Por qué los astrónomos postularon la existencia de la materia oscura?', opts: ['Porque pudieron observarla directamente.', 'Porque las estrellas brillaban demasiado.', 'Porque la materia visible no explica el comportamiento gravitacional observado.', 'Porque Newton se equivocó en sus cálculos.'], ans: 2, expl: 'La materia oscura fue postulada para explicar por qué las galaxias no se desintegran.' },
+        { id: 'q6', readingId: 'r_darkmatter', text: '¿Qué característica fundamental distingue a la materia oscura?', opts: ['Emite luz infrarroja.', 'No interactúa con la fuerza electromagnética.', 'Es más densa que el plomo.', 'Solo existe en el centro de las galaxias.'], ans: 1, expl: 'La materia oscura no emite ni refleja luz porque no interactúa electromagnéticamente.' },
+        { id: 'q7', readingId: 'r_darkmatter', text: '¿Cómo sabemos que la materia oscura existe?', opts: ['Por observación directa con telescopios especiales.', 'Por sus efectos gravitacionales sobre la materia visible.', 'Porque algunos astronautas la han tocado.', 'Por experimentos en laboratorio.'], ans: 1, expl: 'La detección es indirecta, a través de efectos gravitacionales.' },
+        { id: 'q8', readingId: 'r_rulfo', text: '¿Qué recurso literario predomina en la descripción del ambiente?', opts: ['La hipérbole y la comparación sensorial.', 'La personificación exclusiva.', 'El símil sin metáfora.', 'La aliteración constante.'], ans: 0, expl: 'El texto usa hipérbole ("plomo derretido") y comparaciones para crear atmósfera opresiva.' },
+        { id: 'q9', readingId: 'r_rulfo', text: '¿Qué simboliza la promesa hecha a la madre moribunda?', opts: ['Una simple obligación familiar.', 'Un pacto que trasciende la muerte y vincula al hijo con su pasado.', 'Un acto de rebeldía juvenil.', 'Una tradición mexicana sin mayor significado.'], ans: 1, expl: 'La promesa conecta al protagonista con su origen y lo obliga a confrontar su historia.' },
+        { id: 'q10', readingId: 'r_rulfo', text: '¿Qué tono predomina en el fragmento?', opts: ['Alegre y esperanzador.', 'Nostálgico y desolador.', 'Irónico y humorístico.', 'Neutral y descriptivo.'], ans: 1, expl: 'El ambiente sofocante, las ruinas y la muerte crean un tono desolador.' },
+        { id: 'q11', readingId: 'r_poema', text: '¿Cuál es la tesis central del poema de Sor Juana?', opts: ['Que los hombres son superiores intelectualmente.', 'Que existe una contradicción en el juicio moral masculino hacia las mujeres.', 'Que las mujeres deben someterse.', 'Que el amor es imposible.'], ans: 1, expl: 'Sor Juana denuncia la hipocresía de condenar en la mujer lo que el hombre provoca.' },
+        { id: 'q12', readingId: 'r_poema', text: '¿Qué significa "necedad" en el contexto del poema?', opts: ['Falta de inteligencia.', 'Terquedad en el error moral.', 'Ignorancia académica.', 'Pobreza económica.'], ans: 1, expl: 'La necedad aquí no es falta de inteligencia sino obstinación en el error moral.' },
+        { id: 'q13', readingId: 'r_redes', text: '¿Qué efecto tienen las redes sociales según el texto?', opts: ['Mejoran la autoestima de todos.', 'Crean adicción a la retroalimentación inmediata.', 'Fomentan el pensamiento crítico.', 'Eliminan la necesidad de aprobación.'], ans: 1, expl: 'Las plataformas generan descargas de dopamina que crean adicción a la validación.' },
+        { id: 'q14', readingId: 'r_redes', text: '¿Por qué se homogeneiza el pensamiento en redes sociales?', opts: ['Porque las personas quieren ser únicas.', 'Porque se busca maximizar likes evitando controversia.', 'Porque los algoritmos promueven la diversidad.', 'Porque no hay suficientes usuarios.'], ans: 1, expl: 'Para obtener más likes, los usuarios evitan opiniones controvertidas o matizadas.' },
+        { id: 'q15', readingId: 'r_lectura', text: '¿Por qué la lectura profunda es un "acto de resistencia"?', opts: ['Porque los libros son caros.', 'Porque contradice la cultura de la inmediatez y fragmentación.', 'Porque está prohibida en algunos países.', 'Porque nadie lee ya.'], ans: 1, expl: 'En un mundo de inmediatez, leer textos largos es contracultural.' },
+        { id: 'q16', readingId: 'r_lectura', text: '¿Qué consecuencia tiene no ejercitar la lectura profunda?', opts: ['Se pierde la vista.', 'Se atrofian los circuitos neuronales relacionados.', 'Se olvida el alfabeto.', 'No hay consecuencias.'], ans: 1, expl: 'Maryanne Wolf advierte que estos circuitos neuronales se atrofian sin uso.' },
+        { id: 'q17', readingId: 'r_neurop', text: '¿Qué implica que el aprendizaje "remodele físicamente" el cerebro?', opts: ['Que cambia el tamaño del cráneo.', 'Que las conexiones neuronales se modifican estructuralmente.', 'Que el cerebro cambia de color.', 'Que se generan nuevos lóbulos.'], ans: 1, expl: 'El aprendizaje crea y modifica conexiones sinápticas físicamente.' },
+        { id: 'q18', readingId: 'r_darkmatter', text: '¿Qué porcentaje de la materia del universo es materia oscura?', opts: ['Aproximadamente 15%.', 'Aproximadamente 50%.', 'Aproximadamente 85%.', 'Menos del 5%.'], ans: 2, expl: 'El texto indica que constituye aproximadamente el 85% de la materia del universo.' },
+        { id: 'q19', readingId: 'r_poema', text: '¿Qué figura retórica usa Sor Juana para exponer la contradicción?', opts: ['Solo la metáfora.', 'El retruécano y la antítesis.', 'La onomatopeya.', 'El símil únicamente.'], ans: 1, expl: 'Utiliza el retruécano y la antítesis para mostrar la contradicción masculina.' },
+        { id: 'q20', readingId: 'r_lectura', text: '¿Contra qué nos protege la lectura profunda según el texto?', opts: ['Contra el aburrimiento.', 'Contra la manipulación y las noticias falsas.', 'Contra el insomnio.', 'Contra la soledad.'], ans: 1, expl: 'Sin lectura profunda somos más vulnerables a la manipulación y desinformación.' },
+        { id: 'q21', readingId: 'r_neurop', text: '¿Cuál sería una inferencia válida sobre el dogma anterior?', opts: ['Era completamente inútil para la medicina.', 'Limitaba las expectativas sobre la recuperación de pacientes con lesiones cerebrales.', 'Fue creado por científicos corruptos.', 'Nunca fue aceptado por la comunidad científica.'], ans: 1, expl: 'Si el cerebro era "estático", las esperanzas de rehabilitación eran limitadas.' },
+        { id: 'q22', readingId: 'r_darkmatter', text: '¿Qué se puede inferir sobre nuestra comprensión actual del universo?', opts: ['Es completa y definitiva.', 'Tiene vacíos fundamentales que la materia oscura evidencia.', 'Solo depende de la tecnología de telescopios.', 'No requiere más investigación.'], ans: 1, expl: 'El 85% del universo siendo "invisible" muestra vacíos en nuestro conocimiento.' },
+        { id: 'q23', readingId: 'r_rulfo', text: '¿Qué se puede inferir sobre la relación entre el narrador y su padre?', opts: ['Tenían una relación cercana y amorosa.', 'Es una relación marcada por la ausencia y el abandono.', 'Se comunicaban frecuentemente por carta.', 'El padre visitaba regularmente.'], ans: 1, expl: 'La madre habla de "olvido" y de "lo que nunca me dio", indicando abandono.' },
+        { id: 'q24', readingId: 'r_poema', text: '¿Qué intención implícita tiene el uso del vocativo "Hombres necios"?', opts: ['Halagar a los lectores masculinos.', 'Confrontar directamente y provocar reflexión en el receptor.', 'Pedir disculpas por adelantado.', 'Establecer un tono amistoso.'], ans: 1, expl: 'El vocativo directo es una confrontación que busca provocar reflexión.' },
+        { id: 'q25', readingId: 'r_redes', text: '¿Qué implica comparar las redes sociales con "máquinas tragamonedas"?', opts: ['Que son muy coloridas.', 'Que están diseñadas para crear adicción mediante recompensas intermitentes.', 'Que se pueden ganar premios.', 'Que son ilegales.'], ans: 1, expl: 'Las tragamonedas crean adicción con recompensas impredecibles, igual que los likes.' },
+        { id: 'q26', readingId: 'r_lectura', text: '¿Por qué la autora usa el término "circuitos neuronales"?', opts: ['Para sonar más técnica sin razón.', 'Para enfatizar la base biológica y científica de su argumento.', 'Porque es neurocirujana.', 'Para confundir al lector.'], ans: 1, expl: 'El término científico refuerza que no es opinión sino evidencia neurológica.' },
+        { id: 'q27', readingId: 'r_neurop', text: '¿Qué se puede inferir sobre la relación entre ambiente y desarrollo cerebral?', opts: ['El ambiente no tiene ninguna influencia.', 'El ambiente moldea activamente la estructura cerebral.', 'Solo afecta en la infancia.', 'El cerebro determina el ambiente.'], ans: 1, expl: 'La neuroplasticidad responde "a la diversidad del entorno".' },
+        { id: 'q28', readingId: 'r_darkmatter', text: '¿Qué implica que la materia oscura no interactúe electromagnéticamente?', opts: ['Que es muy pequeña.', 'Que no podemos detectarla con luz ni radiación convencional.', 'Que es extremadamente caliente.', 'Que solo existe en teoría.'], ans: 1, expl: 'Sin interacción electromagnética, es invisible a telescopios y detectores de luz.' },
+        { id: 'q29', readingId: 'r_rulfo', text: '¿Qué sugiere la imagen de "manos muertas" que no sueltan?', opts: ['Que la madre era muy fuerte.', 'Que la promesa tiene un peso que trasciende la muerte.', 'Que el hijo no quería irse.', 'Que hacía mucho frío.'], ans: 1, expl: 'Las manos que no sueltan simbolizan cómo la promesa ata al hijo más allá de la muerte.' },
+        { id: 'q30', readingId: 'r_poema', text: '¿Qué tipo de lógica emplea Sor Juana en su argumentación?', opts: ['Lógica matemática pura.', 'Silogismo que desmantela el doble estándar moral.', 'Falacias intencionales.', 'Argumentos de autoridad únicamente.'], ans: 1, expl: 'El texto lo describe como "silogismo poético" que desmantela el doble estándar.' },
+        { id: 'q31', readingId: 'r_redes', text: '¿Qué crítica implícita hace el autor sobre los diseñadores de plataformas?', opts: ['Que son muy creativos.', 'Que diseñan deliberadamente para explotar vulnerabilidades psicológicas.', 'Que no entienden de tecnología.', 'Que son muy éticos.'], ans: 1, expl: 'El "diseño conductual" implica intencionalidad en crear adicción.' },
+        { id: 'q32', readingId: 'r_lectura', text: '¿Qué conexión establece el texto entre lectura y democracia?', opts: ['No hay conexión.', 'La lectura profunda protege contra la manipulación demagógica.', 'Solo los políticos deben leer.', 'La lectura es un lujo innecesario.'], ans: 1, expl: 'Sin lectura profunda somos vulnerables a la "simplificación demagógica".' },
+        { id: 'q33', readingId: 'r_neurop', text: '¿Qué actitud hacia el conocimiento científico sugiere el texto?', opts: ['Que es inmutable y definitivo.', 'Que está en constante revisión y puede cambiar radicalmente.', 'Que solo los expertos pueden entenderlo.', 'Que no tiene aplicaciones prácticas.'], ans: 1, expl: 'El "dogma" fue derribado, mostrando que la ciencia evoluciona.' },
+        { id: 'q34', readingId: 'r_darkmatter', text: '¿Qué tono predomina en el texto sobre materia oscura?', opts: ['Pesimista y derrotista.', 'Objetivo pero con sentido de misterio y posibilidad.', 'Humorístico y ligero.', 'Agresivo y confrontativo.'], ans: 1, expl: 'El texto presenta hechos con apertura hacia el "misterio" y futuras redefiniciones.' },
+        { id: 'q35', readingId: 'r_rulfo', text: '¿Qué función cumple la descripción del clima en el fragmento?', opts: ['Dar información meteorológica.', 'Crear una atmósfera que refleja el estado emocional y espiritual del lugar.', 'Distraer al lector.', 'Mostrar que es verano.'], ans: 1, expl: 'El calor sofocante y las ruinas reflejan la desolación espiritual del pueblo.' },
+        { id: 'q36', readingId: 'r_poema', text: '¿Qué puede inferirse sobre la posición social de Sor Juana?', opts: ['Era una mujer sin educación.', 'Tenía acceso a educación y capacidad de expresión crítica pública.', 'No sabía escribir.', 'Vivía aislada sin contacto social.'], ans: 1, expl: 'Su capacidad argumentativa y publicación sugieren educación y posición para expresarse.' },
+        { id: 'q37', readingId: 'r_redes', text: '¿Qué paradoja señala el texto sobre la "autenticidad"?', opts: ['Que todos son auténticos en redes.', 'Que se sacrifica la autenticidad por buscar popularidad.', 'Que la autenticidad no existe.', 'Que solo los famosos son auténticos.'], ans: 1, expl: 'Para maximizar likes se evita la autenticidad y se homogeniza el contenido.' },
+        { id: 'q38', readingId: 'r_lectura', text: '¿Qué distinción hace el texto entre "decodificar" y "leer profundamente"?', opts: ['Son exactamente lo mismo.', 'Decodificar es reconocer palabras; leer profundamente implica análisis crítico.', 'Leer profundamente es más rápido.', 'Decodificar es más difícil.'], ans: 1, expl: 'Se puede decodificar sin hacer inferencias complejas ni análisis crítico.' },
+        { id: 'q39', readingId: 'r_neurop', text: '¿Qué esperanza ofrece la neuroplasticidad para la educación?', opts: ['Que algunos nunca podrán aprender.', 'Que el potencial de aprendizaje no está predeterminado por la biología inicial.', 'Que la educación es innecesaria.', 'Que solo los genios pueden aprender.'], ans: 1, expl: 'Si el cerebro se adapta, el potencial de aprendizaje no está fijado al nacer.' },
+        { id: 'q40', readingId: 'r_darkmatter', text: '¿Por qué resolver el misterio de la materia oscura es importante?', opts: ['Solo por curiosidad.', 'Podría redefinir nuestra comprensión de la física fundamental.', 'Para ganar premios.', 'No es realmente importante.'], ans: 1, expl: 'El texto indica que podría "redefinir nuestra comprensión de la física fundamental".' },
+        { id: 'q41', readingId: 'r_neurop', text: '¿Cómo sintetizarías la relación entre dogma científico y progreso?', opts: ['Los dogmas siempre frenan el progreso.', 'Los dogmas son necesarios hasta que nueva evidencia los supera.', 'El progreso es independiente de los dogmas.', 'Los dogmas nunca cambian.'], ans: 1, expl: 'Los paradigmas funcionan hasta que la evidencia los supera, permitiendo avance.' },
+        { id: 'q42', readingId: 'r_darkmatter', text: '¿Qué limitación epistemológica evidencia el caso de la materia oscura?', opts: ['Que la ciencia es inútil.', 'Que nuestros métodos de detección están limitados a ciertos tipos de interacción.', 'Que los astrónomos son incompetentes.', 'Que el universo es simple.'], ans: 1, expl: 'Solo detectamos lo que interactúa electromagnéticamente, limitando nuestro conocimiento.' },
+        { id: 'q43', readingId: 'r_rulfo', text: '¿Cómo integra Rulfo lo físico y lo espiritual en su descripción?', opts: ['Los separa completamente.', 'El ambiente físico es metáfora del estado espiritual.', 'Ignora lo espiritual.', 'Solo describe lo físico.'], ans: 1, expl: 'El calor, las ruinas y las moscas reflejan la desolación espiritual del pueblo.' },
+        { id: 'q44', readingId: 'r_poema', text: '¿Por qué el poema de Sor Juana sigue siendo relevante hoy?', opts: ['Porque está bien rimado.', 'Porque la crítica al doble estándar de género persiste en la sociedad.', 'Porque es muy antiguo.', 'Porque habla de hombres.'], ans: 1, expl: 'El doble estándar moral hacia las mujeres sigue existiendo en diversas formas.' },
+        { id: 'q45', readingId: 'r_redes', text: '¿Qué solución implícita sugiere el texto para el problema de las redes?', opts: ['Eliminar todo internet.', 'Recuperar espacios donde las ideas se valoren por veracidad, no viralidad.', 'Ignorar el problema.', 'Usar más redes sociales.'], ans: 1, expl: 'El texto pide "espacios donde el valor de una idea no se mida por su viralidad".' },
+        { id: 'q46', readingId: 'r_lectura', text: '¿Cuál es la tesis principal del texto sobre lectura?', opts: ['Que leer es aburrido.', 'Que la lectura profunda es esencial para el pensamiento crítico y está en peligro.', 'Que solo los intelectuales deben leer.', 'Que el papel es mejor que lo digital.'], ans: 1, expl: 'El texto argumenta que la lectura profunda es vital y está amenazada por la cultura digital.' },
+        { id: 'q47', readingId: 'r_neurop', text: '¿Qué implicaciones tiene la neuroplasticidad para personas mayores?', opts: ['Que no pueden aprender nada nuevo.', 'Que el cerebro puede seguir adaptándose a cualquier edad.', 'Que deben evitar el esfuerzo mental.', 'Que su cerebro está completamente fijado.'], ans: 1, expl: 'La neuroplasticidad ocurre "a lo largo de la vida", no solo en jóvenes.' },
+        { id: 'q48', readingId: 'r_darkmatter', text: '¿Qué nos enseña la materia oscura sobre el método científico?', opts: ['Que solo vale lo que vemos directamente.', 'Que la ciencia puede inferir existencias a partir de efectos indirectos.', 'Que las teorías son inútiles.', 'Que la observación directa es el único método.'], ans: 1, expl: 'La ciencia infiere la existencia de materia oscura por sus efectos gravitacionales.' },
+        { id: 'q49', readingId: 'r_rulfo', text: '¿Qué papel juega la memoria en el fragmento de Rulfo?', opts: ['No tiene ningún papel.', 'Es el motor que impulsa la acción y conecta generaciones.', 'Solo genera confusión.', 'Es irrelevante para la trama.'], ans: 1, expl: 'El recuerdo de la madre y su promesa son lo que mueve al protagonista.' },
+        { id: 'q50', readingId: 'r_poema', text: '¿Qué estrategia argumentativa hace más efectivo el poema?', opts: ['Usar vocabulario muy simple.', 'Usar la lógica del acusador contra sí mismo.', 'Evitar toda emoción.', 'Ser muy extenso.'], ans: 1, expl: 'Sor Juana usa la lógica masculina para mostrar su propia contradicción.' },
+        { id: 'q51', readingId: 'r_redes', text: '¿Cómo afecta la gamificación a la autenticidad personal?', opts: ['La mejora siempre.', 'La erosiona al convertir la expresión en búsqueda de métricas.', 'No tiene ningún efecto.', 'La hace más profunda.'], ans: 1, expl: 'Al buscar likes, las personas modifican su expresión perdiendo autenticidad.' },
+        { id: 'q52', readingId: 'r_lectura', text: '¿Qué diferencia hay entre "nostalgia por el papel" y la defensa de la lectura profunda?', opts: ['Son exactamente lo mismo.', 'Una es preferencia de formato; la otra es defensa de capacidades cognitivas.', 'No hay diferencia.', 'La nostalgia es más importante.'], ans: 1, expl: 'El texto aclara que no defiende el papel sino la capacidad de pensamiento crítico.' },
+        { id: 'q53', readingId: 'r_neurop', text: '¿Qué relación existe entre comunicación neuronal y neuroplasticidad?', opts: ['Son procesos independientes.', 'La plasticidad emerge de la comunicación entre neuronas.', 'La comunicación impide la plasticidad.', 'No hay relación.'], ans: 1, expl: 'El texto dice que la plasticidad "emerge de la naturaleza y funcionamiento de las neuronas cuando establecen comunicación".' },
+        { id: 'q54', readingId: 'r_darkmatter', text: '¿Por qué se usa el término "hipotética" para la materia oscura?', opts: ['Porque no existe.', 'Porque su existencia se infiere pero no se ha detectado directamente.', 'Porque es muy pequeña.', 'Porque los científicos tienen dudas sobre todo.'], ans: 1, expl: 'Aunque hay fuerte evidencia indirecta, no se ha detectado directamente aún.' },
+        { id: 'q55', readingId: 'r_rulfo', text: '¿Qué tipo de narrador utiliza Rulfo y qué efecto tiene?', opts: ['Omnisciente, crea distancia.', 'Primera persona, crea intimidad e inmediatez.', 'Segunda persona, es experimental.', 'Tercera persona, es objetivo.'], ans: 1, expl: 'El "yo" narrativo crea intimidad y nos pone en la perspectiva del protagonista.' },
+        { id: 'q56', readingId: 'r_poema', text: '¿Qué indica que el poema es "una acusación intelectualmente rigurosa"?', opts: ['Que usa muchas palabras difíciles.', 'Que construye un argumento lógico paso a paso.', 'Que es muy emocional.', 'Que es muy corto.'], ans: 1, expl: 'El poema usa estructura silogística para construir su argumento sistemáticamente.' },
+        { id: 'q57', readingId: 'r_redes', text: '¿Qué papel juega la dopamina en la adicción a redes?', opts: ['Ninguno.', 'Crea ciclos de recompensa que fomentan el uso compulsivo.', 'Solo afecta el sueño.', 'Reduce el interés en redes.'], ans: 1, expl: 'Las descargas de dopamina intermitentes crean patrones adictivos.' },
+        { id: 'q58', readingId: 'r_lectura', text: '¿Por qué es importante la empatía mencionada en el texto?', opts: ['No es importante.', 'Es una capacidad cognitiva que la lectura profunda desarrolla.', 'Solo sirve para la ficción.', 'Es irrelevante para el pensamiento crítico.'], ans: 1, expl: 'La lectura profunda desarrolla la capacidad de empatizar con perspectivas ajenas.' },
+        { id: 'q59', readingId: 'r_neurop', text: '¿Cómo cambió el concepto de "límites" en neurología?', opts: ['Los límites son ahora más estrictos.', 'Se pasó de límites fijos a potenciales adaptables.', 'No cambió nada.', 'Se eliminó todo concepto de límite.'], ans: 1, expl: 'Del dogma de estructura estática se pasó a reconocer capacidad adaptativa.' },
+        { id: 'q60', readingId: 'r_darkmatter', text: '¿Qué nos dice el 85% sobre nuestra posición en el universo?', opts: ['Que somos muy importantes.', 'Que la mayor parte del universo nos es fundamentalmente invisible.', 'Que conocemos casi todo.', 'Que el universo es pequeño.'], ans: 1, expl: 'El 85% siendo "oscuro" muestra cuánto nos falta por comprender.' },
+        { id: 'q61', readingId: 'r_gramatica', text: '¿Cuál oración contiene un sustantivo propio correctamente escrito?', opts: ['La ciudad de mexico es grande.', 'El volcán Kilauea está en Hawaii.', 'juan llegó temprano.', 'Me gusta la Música clásica.'], ans: 1, expl: 'Los sustantivos propios (Kilauea, Hawaii) llevan mayúscula inicial.' },
+        { id: 'q62', readingId: 'r_gramatica', text: '¿Qué tipo de verbo es "hay" en la oración "Hay muchos libros"?', opts: ['Transitivo.', 'Impersonal.', 'Copulativo.', 'Reflexivo.'], ans: 1, expl: 'Los verbos impersonales como "hay" no tienen sujeto gramatical.' },
+        { id: 'q63', readingId: 'r_oraciones', text: '¿Qué tipo de oración es "Estudia y aprueba"?', opts: ['Yuxtapuesta.', 'Coordinada copulativa.', 'Subordinada.', 'Simple.'], ans: 1, expl: 'Están unidas por el nexo coordinante "y", formando oración coordinada copulativa.' },
+        { id: 'q64', readingId: 'r_oraciones', text: '¿Cuál es un ejemplo correcto de oración yuxtapuesta?', opts: ['Come pero no engorda.', 'Llegó, vio, venció.', 'Estudia porque quiere aprobar.', 'Si llueve, me quedo.'], ans: 1, expl: 'Las oraciones yuxtapuestas se unen por signos de puntuación sin nexo.' },
+        { id: 'q65', readingId: 'r_gramatica', text: '¿Cuáles son las únicas contracciones válidas en español?', opts: ['Del y al.', 'Pa y pa´l.', 'Pal y del.', 'Al y a el.'], ans: 0, expl: 'En español solo existen dos contracciones: al (a + el) y del (de + el).' },
+        { id: 'q66', readingId: 'r_oraciones', text: '¿Qué caracteriza a una oración subordinada?', opts: ['Tiene dos verbos independientes.', 'Una oración depende sintácticamente de otra.', 'No tiene verbo.', 'Siempre es interrogativa.'], ans: 1, expl: 'En las subordinadas, una oración depende sintácticamente de la principal.' },
+        { id: 'q67', readingId: 'r_concordancia', text: '¿Cuál oración tiene concordancia correcta?', opts: ['El espacio y la motivación apropiado.', 'El espacio y la motivación apropiados.', 'El espacio y la motivación apropiada.', 'Los espacio y motivación apropiados.'], ans: 1, expl: 'Con sustantivos de diferente género, el adjetivo va en masculino plural.' },
+        { id: 'q68', readingId: 'r_concordancia', text: '¿Qué son los sustantivos colectivos?', opts: ['Los que nombran varios objetos con plural.', 'Palabras singulares que designan conjuntos.', 'Sustantivos que siempre van en plural.', 'Los que nombran sentimientos.'], ans: 1, expl: 'Palabras como "mayoría, gente, clero" son singulares pero designan conjuntos.' },
+        { id: 'q69', readingId: 'r_gramatica', text: '¿Cuándo se sustantiva un adjetivo?', opts: ['Cuando va después del sustantivo.', 'Cuando va precedido de artículo y funciona como sustantivo.', 'Cuando describe un color.', 'Nunca puede sustantivarse.'], ans: 1, expl: 'Un adjetivo se sustantiva cuando lleva artículo: "La pelirroja llegó".' },
+        { id: 'q70', readingId: 'r_oraciones', text: '¿Qué nexos caracterizan a las oraciones coordinadas adversativas?', opts: ['Y, e, ni.', 'Pero, sino, mas.', 'O, u.', 'Porque, ya que.'], ans: 1, expl: 'Los nexos adversativos (pero, sino, mas) indican contraste u oposición.' },
+        { id: 'q71', readingId: 'r_concordancia', text: '¿Cuál es la forma correcta de referirse a una escritora?', opts: ['Fue nombrado uno de los escritores.', 'Fue nombrada una de las escritoras.', 'Fue nombrado una de los escritores.', 'Fue nombrada uno de los escritoras.'], ans: 1, expl: 'Se debe usar el género gramatical correcto: "la dramaturga fue nombrada una de las escritoras".' },
+        { id: 'q72', readingId: 'r_gramatica', text: '¿Cuál es un verbo copulativo?', opts: ['Correr.', 'Ser.', 'Comer.', 'Llover.'], ans: 1, expl: 'Los verbos copulativos (ser, estar, parecer) unen el sujeto con un atributo.' },
+        { id: 'q73', readingId: 'r_oraciones', text: '¿Con qué debe concordar el verbo?', opts: ['Con el complemento directo.', 'Con el sujeto en número y persona.', 'Con el adjetivo.', 'Con el adverbio.'], ans: 1, expl: 'El verbo debe concordar con el sujeto en número y persona.' },
+        { id: 'q74', readingId: 'r_concordancia', text: '¿Cómo se escribe correctamente el ordinal de 15?', opts: ['Quinceavo.', 'Decimoquinto.', 'Quince-avo.', 'El quinceavo.'], ans: 1, expl: 'Los ordinales se escriben correctamente: "decimoquinto", no el cardinal "quinceavo".' },
+        { id: 'q75', readingId: 'r_gramatica', text: '¿Qué caracteriza a los sustantivos comunes?', opts: ['Nombran entidades únicas.', 'Nombran elementos genéricos sin mayúscula.', 'Siempre llevan mayúscula.', 'Solo nombran personas.'], ans: 1, expl: 'Los sustantivos comunes nombran elementos genéricos: mesa, libro, ciudad.' },
+        { id: 'q76', readingId: 'r_oraciones', text: '¿Qué tipo de nexo es "porque"?', opts: ['Coordinante copulativo.', 'Subordinante causal.', 'Coordinante adversativo.', 'Coordinante disyuntivo.'], ans: 1, expl: '"Porque" introduce una oración subordinada que expresa causa.' },
+        { id: 'q77', readingId: 'r_concordancia', text: '¿"La mayoría de los estudiantes" lleva verbo en singular o plural?', opts: ['Solo singular obligatoriamente.', 'Admite singular o plural según el contexto.', 'Solo plural obligatoriamente.', 'Nunca lleva verbo.'], ans: 1, expl: 'Los colectivos como "mayoría" admiten concordancia en singular o plural según énfasis.' },
+        { id: 'q78', readingId: 'r_gramatica', text: '¿Qué es el predicado nominal?', opts: ['El que tiene verbo transitivo.', 'El formado por verbo copulativo y atributo.', 'El que no tiene verbo.', 'El que tiene complemento directo.'], ans: 1, expl: 'El predicado nominal se forma con verbos copulativos (ser, estar, parecer) y un atributo.' },
+        { id: 'q79', readingId: 'r_oraciones', text: '¿Cuál es una oración coordinada disyuntiva?', opts: ['Estudia y trabaja.', 'Vienes o te quedas.', 'Llegó pero no saludó.', 'Come porque tiene hambre.'], ans: 1, expl: 'Las disyuntivas usan nexos "o, u" que indican alternativa o elección.' },
+        { id: 'q80', readingId: 'r_concordancia', text: '¿Cómo se forma el plural de "el espécimen"?', opts: ['Los espécimens.', 'Los especímenes.', 'Los espécimenes.', 'Los specimen.'], ans: 1, expl: 'Las palabras terminadas en -en forman plural en -enes: especímenes.' },
+        { id: 'q81', readingId: 'r_ortografia', text: '¿Cuándo se usa "rr" en español?', opts: ['Siempre que el sonido es fuerte.', 'Cuando va entre vocales y el sonido es fuerte.', 'Al inicio de palabra.', 'Después de consonante.'], ans: 1, expl: 'Se usa "rr" entre vocales con sonido fuerte: perro, carro. Al inicio o tras consonante se usa "r".' },
+        { id: 'q82', readingId: 'r_ortografia', text: '¿Cuál palabra está correctamente escrita?', opts: ['Enrredo.', 'Isrrael.', 'Enredo.', 'Ariba.'], ans: 2, expl: 'Después de consonante (n) se usa "r" simple: enredo.' },
+        { id: 'q83', readingId: 'r_ortografia', text: '¿Qué diferencia hay entre acento prosódico y ortográfico?', opts: ['Son lo mismo.', 'El prosódico es la intensidad de voz; el ortográfico es la tilde escrita.', 'El ortográfico no existe.', 'El prosódico solo existe en poesía.'], ans: 1, expl: 'Todas las palabras tienen acento prosódico; solo algunas llevan tilde (acento ortográfico).' },
+        { id: 'q84', readingId: 'r_ortografia', text: '¿Conservan tilde los adverbios terminados en -mente?', opts: ['Nunca llevan tilde.', 'Conservan la tilde del adjetivo base.', 'Siempre llevan tilde.', 'Solo si son largos.'], ans: 1, expl: 'Los adverbios en -mente conservan la tilde del adjetivo: rápidamente (de rápido).' },
+        { id: 'q85', readingId: 'r_puntuacion', text: '¿Cuándo es incorrecto usar coma?', opts: ['Antes de "pero".', 'Entre sujeto y predicado.', 'En enumeraciones.', 'Antes de "sin embargo".'], ans: 1, expl: 'Nunca se usa coma entre sujeto y predicado: incorrecto "La Organización, ha destinado".' },
+        { id: 'q86', readingId: 'r_puntuacion', text: '¿Se pueden combinar puntos suspensivos con "etcétera"?', opts: ['Sí, siempre.', 'No, es redundante.', 'Solo en textos formales.', 'Solo en listas.'], ans: 1, expl: 'No se combinan porque ambos indican continuación: incorrecto "Mercurio, Venus, etcétera..."' },
+        { id: 'q87', readingId: 'r_ortografia', text: '¿Cómo se escriben los compuestos con guion respecto a tildes?', opts: ['Pierden todas las tildes.', 'Conservan las tildes originales.', 'Solo la primera palabra lleva tilde.', 'Nunca llevan tilde.'], ans: 1, expl: 'Los compuestos con guion conservan tildes: teórico-práctico.' },
+        { id: 'q88', readingId: 'r_puntuacion', text: '¿Qué función tienen los paréntesis?', opts: ['Dar énfasis.', 'Encerrar información aclaratoria.', 'Indicar gritos.', 'Separar oraciones principales.'], ans: 1, expl: 'Los paréntesis encierran información aclaratoria o complementaria.' },
+        { id: 'q89', readingId: 'r_ortografia', text: '¿Cuál palabra lleva "z" correctamente?', opts: ['Esbozar con z.', 'Esbosar con s.', 'Esfuerso con s.', 'Espesie con s.'], ans: 0, expl: 'Esbozar se escribe con z. Las reglas de s/z dependen de la etimología y uso.' },
+        { id: 'q90', readingId: 'r_puntuacion', text: '¿Cómo se escriben varias preguntas consecutivas?', opts: ['Solo la primera lleva signos.', 'Cada una lleva sus signos de interrogación.', 'Se unen sin signos.', 'Solo la última lleva signo.'], ans: 1, expl: 'Correcto: "¿Cómo te llamas? ¿Qué estudiaste? ¿En qué trabajas?"' },
+        { id: 'q91', readingId: 'r_ortografia', text: '¿Por qué "ratón" lleva "r" simple al inicio?', opts: ['Por error de la RAE.', 'Porque al inicio de palabra siempre se usa "r" para sonido fuerte.', 'Porque el sonido es suave.', 'Porque es palabra extranjera.'], ans: 1, expl: 'Al inicio de palabra se usa "r" simple aunque el sonido sea fuerte: ratón, rey, río.' },
+        { id: 'q92', readingId: 'r_puntuacion', text: '¿Dónde van los signos de exclamación en un paréntesis?', opts: ['Siempre fuera.', 'Dentro si solo afectan al contenido del paréntesis.', 'Nunca se usan juntos.', 'Siempre dentro y fuera.'], ans: 1, expl: 'Si la exclamación afecta solo al paréntesis, los signos van dentro.' },
+        { id: 'q93', readingId: 'r_ortografia', text: '¿Cuál es la regla para palabras terminadas en -ción vs -sión?', opts: ['Se escriben igual.', '-ción si hay derivados en -to/-tor; -sión si hay derivados en -so/-sor.', 'Siempre con c.', 'Siempre con s.'], ans: 1, expl: 'Atención (atento), decisión (deciso). La derivación determina la grafía.' },
+        { id: 'q94', readingId: 'r_puntuacion', text: '¿Qué indican los puntos suspensivos?', opts: ['Final de oración.', 'Suspensión del discurso o enumeración incompleta.', 'Error tipográfico.', 'Cambio de tema.'], ans: 1, expl: 'Los puntos suspensivos indican suspensión, duda o enumeración incompleta.' },
+        { id: 'q95', readingId: 'r_ortografia', text: '¿Las palabras agudas llevan tilde cuando...?', opts: ['Siempre.', 'Terminan en vocal, n o s.', 'Nunca.', 'Terminan en consonante.'], ans: 1, expl: 'Las agudas llevan tilde si terminan en vocal, n o s: café, canción, después.' },
+        { id: 'q96', readingId: 'r_puntuacion', text: '¿Cuál uso de la coma es correcto?', opts: ['María, estudia mucho.', 'María estudia, mucho.', 'María, que estudia mucho, aprobó.', 'María estudia mucho,.'], ans: 2, expl: 'La coma encierra incisos explicativos: "María, que estudia mucho, aprobó."' },
+        { id: 'q97', readingId: 'r_ortografia', text: '¿Qué palabras llevan tilde diacrítica?', opts: ['Todas las monosílabas.', 'Monosílabas que se distinguen por función gramatical.', 'Solo los verbos.', 'Ninguna monosílaba.'], ans: 1, expl: 'La tilde diacrítica distingue función: él (pronombre) vs el (artículo), más (cantidad) vs mas (pero).' },
+        { id: 'q98', readingId: 'r_puntuacion', text: '¿Se usa punto después de signos de interrogación o exclamación?', opts: ['Siempre.', 'No, ya funcionan como punto si cierran oración.', 'Solo en preguntas.', 'Solo en exclamaciones.'], ans: 1, expl: 'Los signos de cierre (? !) funcionan como punto. Incorrecto: "¿Cómo estás?."' },
+        { id: 'q99', readingId: 'r_ortografia', text: '¿Cuándo se acentúan los pronombres interrogativos?', opts: ['Nunca.', 'Siempre que introducen pregunta directa o indirecta.', 'Solo en preguntas directas.', 'Solo en oraciones largas.'], ans: 1, expl: 'Qué, quién, cómo, dónde llevan tilde en preguntas directas e indirectas: "No sé qué hacer."' },
+        { id: 'q100', readingId: 'r_puntuacion', text: '¿Cuál es la función del punto y coma?', opts: ['Igual que el punto.', 'Separar oraciones relacionadas o elementos complejos en enumeración.', 'Reemplazar la coma siempre.', 'Indicar pregunta.'], ans: 1, expl: 'El punto y coma separa oraciones relacionadas o elementos que ya tienen comas internas.' },
+        { id: 'q101', readingId: 'r_conectores', text: '¿Cuál conector expresa causa?', opts: ['Por lo tanto.', 'Puesto que.', 'Sin embargo.', 'Además.'], ans: 1, expl: 'Los conectores causales (puesto que, ya que, porque) expresan razón o causa.' },
+        { id: 'q102', readingId: 'r_conectores', text: '¿Qué conector usarías para reformular una idea?', opts: ['Por lo tanto.', 'Es decir.', 'Sin embargo.', 'Porque.'], ans: 1, expl: 'Los conectores explicativos (es decir, en otras palabras) reformulan o aclaran.' },
+        { id: 'q103', readingId: 'r_conectores', text: '¿Cuál oración usa correctamente un conector consecutivo?', opts: ['Estudió mucho, puesto que aprobó.', 'Estudió mucho, por lo tanto aprobó.', 'Estudió mucho, es decir aprobó.', 'Estudió mucho, sin embargo aprobó.'], ans: 1, expl: '"Por lo tanto" expresa consecuencia: el estudio causó la aprobación.' },
+        { id: 'q104', readingId: 'r_concordancia', text: '¿Cuál referencia textual evita mejor la repetición?', opts: ['Los problemas. Los problemas son graves.', 'Los problemas. Dichos problemas son graves.', 'Los problemas. Ellos problemas son graves.', 'Los problemas. Las problemas son graves.'], ans: 1, expl: '"Dichos problemas" es una referencia textual que evita repetición.' },
+        { id: 'q105', readingId: 'r_conectores', text: '¿Qué expresa el conector "sin embargo"?', opts: ['Causa.', 'Contraste u oposición.', 'Adición.', 'Consecuencia.'], ans: 1, expl: '"Sin embargo" es un conector adversativo que indica contraste.' },
+        { id: 'q106', readingId: 'r_puntuacion', text: '¿Cuál oración tiene puntuación correcta?', opts: ['El TLCAN, también conocido como NAFTA por sus siglas en inglés, entró en vigor.', 'El TLCAN (también conocido como NAFTA, por sus siglas en inglés) entró en vigor.', 'El TLCAN también conocido como NAFTA por sus siglas en inglés entró en vigor.', 'El TLCAN (también conocido, como NAFTA por sus siglas, en inglés) entró en vigor.'], ans: 1, expl: 'El paréntesis encierra correctamente la aclaración con su puntuación interna.' },
+        { id: 'q107', readingId: 'r_conectores', text: '¿Qué función tiene "además" en un texto?', opts: ['Contrastar ideas.', 'Añadir información.', 'Indicar causa.', 'Expresar duda.'], ans: 1, expl: '"Además" es un conector de adición que suma información.' },
+        { id: 'q108', readingId: 'r_concordancia', text: '¿Cuál oración tiene coherencia correcta?', opts: ['María compró flores. Él las puso en un jarrón.', 'María compró flores. Ella las puso en un jarrón.', 'María compró flores. Ellos las puso en un jarrón.', 'María compró flores. Las puso las en un jarrón.'], ans: 1, expl: 'El pronombre "ella" mantiene coherencia con el sujeto femenino "María".' },
+        { id: 'q109', readingId: 'r_conectores', text: '¿Cuál es un conector de orden o secuencia?', opts: ['Porque.', 'En primer lugar.', 'Sin embargo.', 'Es decir.'], ans: 1, expl: '"En primer lugar, en segundo lugar, finalmente" ordenan la información.' },
+        { id: 'q110', readingId: 'r_concordancia', text: '¿Qué error hay en "Las medidas tomadas por el gobierno, las cuales fueron criticadas"?', opts: ['Error de género.', 'Oración incompleta, falta el predicado principal.', 'Error de número.', 'No hay error.'], ans: 1, expl: 'La oración está incompleta: inicia un tema pero no completa la idea principal.' },
+        { id: 'q111', readingId: 'r_conectores', text: '¿Cómo se expresa una conclusión?', opts: ['Por ejemplo.', 'En conclusión.', 'Además.', 'Porque.'], ans: 1, expl: 'Conectores conclusivos: en conclusión, en resumen, por último, finalmente.' },
+        { id: 'q112', readingId: 'r_puntuacion', text: '¿Cuándo se usa dos puntos antes de una enumeración?', opts: ['Siempre.', 'Cuando se anuncia explícitamente la enumeración.', 'Nunca.', 'Solo con números.'], ans: 1, expl: 'Se usa dos puntos cuando se anuncia: "Compró tres cosas: pan, leche y huevos."' },
+        { id: 'q113', readingId: 'r_concordancia', text: '¿Cuál oración mantiene coherencia temporal?', opts: ['Ayer fui al cine y mañana compré palomitas.', 'Ayer fui al cine y compré palomitas.', 'Ayer fui al cine y compraré palomitas.', 'Ayer voy al cine y compré palomitas.'], ans: 1, expl: 'Los verbos deben mantener coherencia temporal: ambos en pasado.' },
+        { id: 'q114', readingId: 'r_conectores', text: '¿Qué conector introduce un ejemplo?', opts: ['Sin embargo.', 'Por ejemplo.', 'Por lo tanto.', 'Aunque.'], ans: 1, expl: '"Por ejemplo, como, tal como" introducen ejemplos o ilustraciones.' },
+        { id: 'q115', readingId: 'r_concordancia', text: '¿Cuál pronombre sustituye correctamente a "los estudiantes"?', opts: ['Ella.', 'Ellos.', 'Él.', 'Nosotros.'], ans: 1, expl: '"Los estudiantes" es masculino plural, se sustituye por "ellos".' },
+        { id: 'q116', readingId: 'r_conectores', text: '¿Qué expresa "a pesar de que"?', opts: ['Causa.', 'Concesión u obstáculo que no impide.', 'Consecuencia.', 'Adición.'], ans: 1, expl: 'Los conectores concesivos indican obstáculo que no impide la acción principal.' },
+        { id: 'q117', readingId: 'r_puntuacion', text: '¿Es correcto "Los países: México, Chile y Perú, participaron"?', opts: ['Sí, es correcto.', 'No, no se usan dos puntos si la enumeración es el sujeto.', 'Depende del contexto.', 'Solo si hay más de tres países.'], ans: 1, expl: 'No se usan dos puntos entre sujeto y verbo, aunque haya enumeración.' },
+        { id: 'q118', readingId: 'r_concordancia', text: '¿Qué error hay en "Entregó el informe, el cual debo revisar ayer"?', opts: ['Error de género.', 'Incoherencia temporal (debo/ayer).', 'Error de número.', 'No hay error.'], ans: 1, expl: '"Debo" es presente; "ayer" es pasado. Hay incoherencia temporal.' },
+        { id: 'q119', readingId: 'r_conectores', text: '¿Cuál secuencia de conectores es lógica para un argumento?', opts: ['En conclusión, primero, después.', 'En primer lugar, además, por lo tanto.', 'Por ejemplo, sin embargo, porque.', 'Finalmente, antes, después.'], ans: 1, expl: 'Primero se ordena (en primer lugar), se añade (además), se concluye (por lo tanto).' },
+        { id: 'q120', readingId: 'r_concordancia', text: '¿Cuál oración tiene correcta referencia anafórica?', opts: ['Juan y Pedro llegaron. Él saludó.', 'Juan llegó. Él saludó a todos.', 'Los niños llegaron. Ella jugó.', 'María y Ana llegaron. Él saludó.'], ans: 1, expl: 'Con un solo referente (Juan), "él" es claro. Con dos, sería ambiguo.' }
+      ],
+      examQuestionMap: {
+        'exam_basic': Array.from({ length: 20 }, (_, i) => `q${i + 1}`),
+        'exam_inter': Array.from({ length: 20 }, (_, i) => `q${i + 21}`),
+        'exam_adv': Array.from({ length: 20 }, (_, i) => `q${i + 41}`),
+        'exam_redaccion_1': Array.from({ length: 20 }, (_, i) => `q${i + 61}`),
+        'exam_redaccion_2': Array.from({ length: 20 }, (_, i) => `q${i + 81}`),
+        'exam_redaccion_3': Array.from({ length: 20 }, (_, i) => `q${i + 101}`)
+      }
+    };
+
+    // State
+    let state = {
+      view: 'dashboard',
+      mobileTab: 'text',
+      currentExamId: null,
+      questionQueue: [],
+      currentIndex: 0,
+      answers: {},
+      timerSeconds: 0,
+      timerInterval: null,
+      score: 0,
+      categoryStats: {},
+      reviewData: []
+    };
+
+    // Utility functions
+    function formatTime(s) {
+      const m = Math.floor(s / 60).toString().padStart(2, '0');
+      const sec = (s % 60).toString().padStart(2, '0');
+      return `${m}:${sec}`;
+    }
+
+    function startTimer() {
+      state.timerInterval = setInterval(() => {
+        state.timerSeconds++;
+        render();
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+      }
+    }
+
+    function startExam(examId) {
+      const questionIds = db.examQuestionMap[examId] || [];
+      const questions = questionIds.map(qId => {
+        const q = db.questions.find(question => question.id === qId);
+        const reading = db.readings[q.readingId];
+        return { ...q, reading };
+      });
+
+      state.currentExamId = examId;
+      state.questionQueue = questions;
+      state.currentIndex = 0;
+      state.answers = {};
+      state.timerSeconds = 0;
+      state.mobileTab = 'text';
+      state.view = 'exam';
+      startTimer();
+      render();
+    }
+
+    function selectAnswer(optIndex) {
+      const currentQuestion = state.questionQueue[state.currentIndex];
+      if (!currentQuestion) return;
+      state.answers[currentQuestion.id] = optIndex;
+      render();
+
+      setTimeout(() => {
+        if (state.currentIndex < state.questionQueue.length - 1) {
+          state.currentIndex++;
+          if (window.innerWidth < 1024) state.mobileTab = 'question';
+        } else {
+          finishExam();
+        }
+        render();
+      }, 300);
+    }
+
+    function finishExam() {
+      stopTimer();
+
+      let correct = 0;
+      const categories = {
+        'CIENTÍFICO': { total: 0, correct: 0 },
+        'LITERARIO': { total: 0, correct: 0 },
+        'ARGUMENTATIVO': { total: 0, correct: 0 },
+        'GRAMÁTICA': { total: 0, correct: 0 },
+        'ORTOGRAFÍA': { total: 0, correct: 0 },
+        'PUNTUACIÓN': { total: 0, correct: 0 }
+      };
+
+      const mapType = (type) => {
+        if (type.includes('CIENCIA') || type.includes('ASTRONOMÍA')) return 'CIENTÍFICO';
+        if (type.includes('LITERATURA') || type.includes('ANÁLISIS')) return 'LITERARIO';
+        if (type.includes('GRAMÁTICA') || type.includes('SINTAXIS') || type.includes('CONCORDANCIA')) return 'GRAMÁTICA';
+        if (type.includes('ORTOGRAFÍA')) return 'ORTOGRAFÍA';
+        if (type.includes('PUNTUACIÓN') || type.includes('REDACCIÓN')) return 'PUNTUACIÓN';
+        return 'ARGUMENTATIVO';
+      };
+
+      const review = [];
+
+      state.questionQueue.forEach(q => {
+        const userAns = state.answers[q.id];
+        const isCorrect = userAns === q.ans;
+        if (isCorrect) correct++;
+
+        const cat = mapType(q.reading?.type || '');
+        if (categories[cat]) {
+          categories[cat].total++;
+          if (isCorrect) categories[cat].correct++;
+        }
+
+        review.push({ q, userAns, isCorrect });
+      });
+
+      state.score = Math.round((correct / state.questionQueue.length) * 100);
+      state.categoryStats = categories;
+      state.reviewData = review;
+      state.view = 'results';
+      render();
+    }
+
+    function returnToDashboard() {
+      if (state.view === 'exam' && !confirm('¿Finalizar sesión actual?')) return;
+      stopTimer();
+      state.view = 'dashboard';
+      state.currentExamId = null;
+      render();
+    }
+
+    // Icons (SVG)
+    const icons = {
+      arrowRight: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>',
+      clock: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+      x: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+      chevronLeft: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>',
+      chevronRight: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>',
+      check: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+      xCircle: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+      bookOpen: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>'
+    };
+
+    // Render functions
+    function renderHeader() {
+      return `
+        <header class="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+          <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <button onclick="returnToDashboard()" class="flex items-center gap-3 group">
+              <div class="w-10 h-10 bg-foreground text-background flex items-center justify-center font-serif font-bold text-lg rounded-sm group-hover:opacity-90 transition-colors">
+                EA
+              </div>
+              <div class="flex flex-col">
+                <span class="font-serif font-semibold text-sm tracking-wide text-foreground">EstudiandoAndo</span>
+                <span class="text-[10px] text-muted-foreground tracking-widest uppercase">Sistema V6</span>
+              </div>
+            </button>
+
+            <div class="flex items-center gap-4">
+              ${state.view === 'exam' ? `
+                <div class="flex items-center gap-2">
+                  ${icons.clock}
+                  <span class="font-mono text-sm tabular-nums">${formatTime(state.timerSeconds)}</span>
+                </div>
+                <button onclick="returnToDashboard()" class="flex items-center gap-1 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
+                  ${icons.x}
+                  <span class="hidden sm:inline">Salir</span>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </header>
+      `;
+    }
+
+    function renderExamCard(exam) {
+      return `
+        <button onclick="startExam('${exam.id}')" class="w-full text-left p-6 border border-border rounded-sm hover:border-foreground/30 hover:bg-muted/30 transition-all duration-200 group">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-xs text-muted-foreground font-mono">${exam.idx}</span>
+                <h4 class="font-serif text-lg font-medium group-hover:text-foreground transition-colors">
+                  ${exam.title}
+                </h4>
+              </div>
+              <p class="text-sm text-muted-foreground mb-4">${exam.desc}</p>
+              <div class="flex items-center gap-4 text-xs text-muted-foreground">
+                <span class="flex items-center gap-1">
+                  ${icons.clock}
+                  ${exam.time}
+                </span>
+                <span>${exam.questions} preguntas</span>
+              </div>
+            </div>
+            <span class="text-muted-foreground group-hover:text-foreground group-hover:translate-x-1 transition-all flex-shrink-0 mt-1">${icons.arrowRight}</span>
+          </div>
+        </button>
+      `;
+    }
+
+    function renderDashboard() {
+      const lecturaExams = db.exams.filter(e => e.category === 'lectura');
+      const redaccionExams = db.exams.filter(e => e.category === 'redaccion');
+
+      return `
+        <main>
+          <!-- Hero Section -->
+          <section class="py-24 sm:py-32 lg:py-40 px-4 sm:px-6 lg:px-8 bg-background">
+            <div class="max-w-4xl mx-auto text-center">
+              <div class="inline-flex items-center gap-2 border border-border rounded-full px-4 py-2 mb-8">
+                <span class="w-2 h-2 rounded-full bg-chart-2 animate-pulse"></span>
+                <span class="text-xs uppercase tracking-widest text-muted-foreground">Plataforma de Entrenamiento</span>
+              </div>
+              
+              <h1 class="font-serif text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight mb-6 text-balance">
+                El simulador que asegura tu ingreso
+              </h1>
+              
+              <p class="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-12 text-pretty">
+                Practica con reactivos reales de Comprensión Lectora y Redacción Indirecta. 
+                Feedback instantáneo y análisis detallado de tu desempeño.
+              </p>
+
+              <a href="#simulacros" class="inline-flex items-center gap-2 bg-foreground text-background px-8 py-4 text-sm font-medium tracking-wide hover:bg-opacity-90 transition-colors rounded-sm">
+                Comenzar ahora
+                ${icons.arrowRight}
+              </a>
+            </div>
+          </section>
+
+          <!-- Stats Section -->
+          <section class="border-y border-border bg-muted/30">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+              <div class="grid grid-cols-3 gap-8 text-center">
+                <div>
+                  <div class="font-serif text-3xl sm:text-4xl lg:text-5xl font-semibold mb-2">120+</div>
+                  <div class="text-xs uppercase tracking-widest text-muted-foreground">Reactivos</div>
+                </div>
+                <div>
+                  <div class="font-serif text-3xl sm:text-4xl lg:text-5xl font-semibold text-chart-2 mb-2">98%</div>
+                  <div class="text-xs uppercase tracking-widest text-muted-foreground">Efectividad</div>
+                </div>
+                <div>
+                  <div class="font-serif text-3xl sm:text-4xl lg:text-5xl font-semibold mb-2">6</div>
+                  <div class="text-xs uppercase tracking-widest text-muted-foreground">Simulacros</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Exams Section -->
+          <section id="simulacros" class="py-20 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-6xl mx-auto">
+              <!-- Comprensión Lectora -->
+              <div class="mb-16">
+                <div class="flex items-center gap-4 mb-8">
+                  <div class="flex items-center justify-center w-12 h-12 bg-muted rounded-sm">
+                    ${icons.bookOpen}
+                  </div>
+                  <div>
+                    <h2 class="font-serif text-2xl font-semibold">Comprensión Lectora</h2>
+                    <p class="text-sm text-muted-foreground">Análisis de textos literarios, científicos y argumentativos</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  ${lecturaExams.map(exam => renderExamCard(exam)).join('')}
+                </div>
+              </div>
+
+              <!-- Redacción Indirecta -->
+              <div>
+                <div class="flex items-center gap-4 mb-8">
+                  <div class="flex items-center justify-center w-12 h-12 bg-muted rounded-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  </div>
+                  <div>
+                    <h2 class="font-serif text-2xl font-semibold">Redacción Indirecta</h2>
+                    <p class="text-sm text-muted-foreground">Gramática, ortografía, puntuación y coherencia textual</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  ${redaccionExams.map(exam => renderExamCard(exam)).join('')}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Footer -->
+          <footer class="border-t border-border py-8 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-foreground text-background flex items-center justify-center font-serif font-bold text-sm rounded-sm">
+                  EA
+                </div>
+                <span class="font-serif text-sm">EstudiandoAndo</span>
+              </div>
+              <p class="text-xs text-muted-foreground">
+                Plataforma de preparación EXANI-II · V6 · 2026
+              </p>
+            </div>
+          </footer>
+        </main>
+      `;
+    }
+
+    function renderExam() {
+      const currentQuestion = state.questionQueue[state.currentIndex];
+      if (!currentQuestion) return '<div>Cargando...</div>';
+
+      const progress = ((state.currentIndex + 1) / state.questionQueue.length) * 100;
+
+      return `
+        <div class="flex flex-col lg:flex-row h-[calc(100vh-64px)]">
+          <!-- Mobile Tabs -->
+          <div class="lg:hidden flex border-b border-border">
+            <button onclick="state.mobileTab='text'; render();" class="flex-1 py-3 text-xs uppercase tracking-widest font-medium transition-colors ${state.mobileTab === 'text' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}">
+              Lectura
+            </button>
+            <button onclick="state.mobileTab='question'; render();" class="flex-1 py-3 text-xs uppercase tracking-widest font-medium transition-colors ${state.mobileTab === 'question' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'}">
+              Pregunta
+            </button>
+          </div>
+
+          <!-- Reading Panel -->
+          <div class="${state.mobileTab === 'text' ? 'flex' : 'hidden'} lg:flex flex-1 lg:w-1/2 flex-col overflow-hidden border-r border-border bg-muted/20">
+            <div class="flex-none px-6 py-4 border-b border-border flex justify-between items-center">
+              <span class="text-xs uppercase tracking-widest text-muted-foreground">Documento fuente</span>
+              <span class="text-xs uppercase tracking-widest px-2 py-1 bg-muted rounded-sm font-medium">
+                ${currentQuestion.reading?.type || ''}
+              </span>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 lg:px-12 py-8 lg:py-12">
+              <h2 class="font-serif text-2xl lg:text-3xl font-semibold mb-6 tracking-tight">
+                ${currentQuestion.reading?.title || ''}
+              </h2>
+              <div class="reading-content font-serif text-base lg:text-lg leading-relaxed text-muted-foreground">
+                ${currentQuestion.reading?.content || ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- Question Panel -->
+          <div class="${state.mobileTab === 'question' ? 'flex' : 'hidden'} lg:flex flex-1 lg:w-1/2 flex-col overflow-hidden">
+            <!-- Progress Bar -->
+            <div class="h-1 bg-muted">
+              <div class="h-full bg-foreground transition-all duration-300" style="width: ${progress}%"></div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-6 lg:px-12 py-8 lg:py-12">
+              <div class="max-w-lg mx-auto">
+                <div class="flex items-center justify-between mb-8 pb-4 border-b border-border">
+                  <span class="text-xs uppercase tracking-widest text-muted-foreground">Reactivo</span>
+                  <span class="text-xs uppercase tracking-widest font-medium">
+                    <span class="text-foreground">${(state.currentIndex + 1).toString().padStart(2, '0')}</span>
+                    <span class="text-muted-foreground"> / ${state.questionQueue.length}</span>
+                  </span>
+                </div>
+
+                <h3 class="font-serif text-xl lg:text-2xl font-medium mb-10 leading-snug">
+                  ${currentQuestion.text}
+                </h3>
+
+                <div class="space-y-3">
+                  ${currentQuestion.opts.map((opt, i) => {
+                    const isSelected = state.answers[currentQuestion.id] === i;
+                    return `
+                      <button onclick="selectAnswer(${i})" class="w-full text-left p-4 border rounded-sm transition-all duration-200 ${isSelected ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground/50 hover:bg-muted/50'}">
+                        <div class="flex items-start gap-4">
+                          <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${isSelected ? 'bg-background text-foreground' : 'bg-muted text-muted-foreground'}">
+                            ${String.fromCharCode(65 + i)}
+                          </span>
+                          <span class="text-sm leading-relaxed">${opt}</span>
+                        </div>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex-none px-6 py-4 border-t border-border flex justify-between items-center">
+              <button onclick="if(state.currentIndex > 0) { state.currentIndex--; render(); }" ${state.currentIndex === 0 ? 'disabled' : ''} class="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
+                ${icons.chevronLeft}
+                Anterior
+              </button>
+              <button onclick="state.mobileTab='text'; render();" class="lg:hidden text-xs uppercase tracking-widest border border-border px-4 py-2 hover:bg-muted transition-colors rounded-sm">
+                Ver texto
+              </button>
+              <button onclick="if(state.currentIndex < state.questionQueue.length - 1) { state.currentIndex++; render(); } else { finishExam(); }" class="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
+                ${state.currentIndex === state.questionQueue.length - 1 ? 'Finalizar' : 'Siguiente'}
+                ${icons.chevronRight}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderResults() {
+      return `
+        <main class="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+          <div class="max-w-4xl mx-auto">
+            <!-- Score Header -->
+            <div class="border border-border rounded-sm p-8 sm:p-12 mb-8 bg-muted/20">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-8">
+                <div>
+                  <h2 class="font-serif text-3xl sm:text-4xl font-semibold mb-2">Informe de Resultados</h2>
+                  <p class="text-xs uppercase tracking-widest text-muted-foreground">Diagnóstico de desempeño</p>
+                </div>
+                <div class="text-right">
+                  <div class="font-serif text-5xl sm:text-6xl font-semibold text-chart-2">${state.score}%</div>
+                  <div class="text-xs uppercase tracking-widest text-muted-foreground mt-1">Puntaje global</div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-6 pt-6 border-t border-border">
+                <div>
+                  <span class="text-xs uppercase tracking-widest text-muted-foreground block mb-1">Tiempo total</span>
+                  <span class="font-mono text-lg">${formatTime(state.timerSeconds)}</span>
+                </div>
+                <div>
+                  <span class="text-xs uppercase tracking-widest text-muted-foreground block mb-1">Velocidad</span>
+                  <span class="font-mono text-lg">${Math.round(state.timerSeconds / state.questionQueue.length)}s/preg</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Category Stats -->
+            <div class="border border-border rounded-sm p-8 mb-8">
+              <h3 class="text-xs uppercase tracking-widest text-muted-foreground mb-6">Desempeño por área</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                ${Object.entries(state.categoryStats)
+                  .filter(([, data]) => data.total > 0)
+                  .map(([key, data]) => {
+                    const catScore = Math.round((data.correct / data.total) * 100);
+                    return `
+                      <div class="p-4 bg-muted/30 rounded-sm">
+                        <div class="flex justify-between text-xs uppercase tracking-widest mb-3">
+                          <span class="text-muted-foreground">${key}</span>
+                          <span class="font-medium">${catScore}%</span>
+                        </div>
+                        <div class="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div class="h-full bg-foreground rounded-full transition-all duration-500" style="width: ${catScore}%"></div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+              </div>
+            </div>
+
+            <!-- Review -->
+            <div class="mb-12">
+              <h3 class="text-xs uppercase tracking-widest text-muted-foreground mb-6 pb-4 border-b border-border">
+                Revisión técnica
+              </h3>
+              <div class="space-y-4">
+                ${state.reviewData.map(({ q, userAns, isCorrect }, i) => `
+                  <div class="border rounded-sm p-6 ${!isCorrect ? 'border-l-4 border-l-destructive' : 'border-border'}">
+                    <div class="flex justify-between items-center mb-4">
+                      <span class="text-xs uppercase tracking-widest text-muted-foreground">
+                        Reactivo ${(i + 1).toString().padStart(2, '0')}
+                      </span>
+                      <span class="text-xs uppercase tracking-widest font-medium flex items-center gap-1 ${isCorrect ? 'text-chart-2' : 'text-destructive'}">
+                        ${isCorrect ? icons.check : icons.xCircle}
+                        ${isCorrect ? 'Correcta' : 'Incorrecta'}
+                      </span>
+                    </div>
+                    
+                    <p class="font-serif text-lg mb-6">${q.text}</p>
+                    
+                    <div class="space-y-3 mb-4">
+                      <div class="p-3 bg-muted/50 border-l-2 border-muted-foreground rounded-r-sm">
+                        <span class="text-xs uppercase tracking-widest text-muted-foreground block mb-1">Tu respuesta</span>
+                        <span class="text-sm">${userAns !== undefined ? q.opts[userAns] : '—'}</span>
+                      </div>
+                      ${!isCorrect ? `
+                        <div class="p-3 bg-chart-2/10 border-l-2 border-chart-2 rounded-r-sm">
+                          <span class="text-xs uppercase tracking-widest text-chart-2 block mb-1">Respuesta correcta</span>
+                          <span class="text-sm">${q.opts[q.ans]}</span>
+                        </div>
+                      ` : ''}
+                    </div>
+
+                    <div class="p-4 bg-muted/30 rounded-sm text-sm text-muted-foreground">
+                      <span class="text-xs uppercase tracking-widest text-foreground block mb-1">Justificación</span>
+                      ${q.expl}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Return Button -->
+            <div class="text-center">
+              <button onclick="returnToDashboard()" class="inline-flex items-center gap-2 bg-foreground text-background px-8 py-4 text-sm font-medium tracking-wide hover:bg-opacity-90 transition-colors rounded-sm">
+                Volver al inicio
+              </button>
+            </div>
+          </div>
+        </main>
+      `;
+    }
+
+    function render() {
+      let content = renderHeader();
+
+      if (state.view === 'dashboard') {
+        content += renderDashboard();
+      } else if (state.view === 'exam') {
+        content += renderExam();
+      } else if (state.view === 'results') {
+        content += renderResults();
+      }
+
+      document.getElementById('app').innerHTML = `<div class="min-h-screen bg-background text-foreground font-sans">${content}</div>`;
+    }
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
